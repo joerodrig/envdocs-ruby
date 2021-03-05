@@ -1,0 +1,11 @@
+- development:
+  - key: RAILS_ENV
+    description: Provides info on the rails env
+    required: true
+- test:
+  - key: RAILS_ENV
+    description: Provides info on the rails env
+    required: true
+  - key: FOO
+    description: Testing
+    required: false
