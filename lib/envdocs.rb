@@ -1,4 +1,4 @@
-require "envdocs/railtie"
+require 'envdocs/railtie'
 
 module Envdocs
   class << self
@@ -24,9 +24,9 @@ module Envdocs
       # If optionals included, return all. 
       # Otherwise, return only keys that are marked as required.
       result = {}
-      keys_to_search = @sampler.env_keys.select { |ek| @opts[:include_optional] || ek["required"] }
+      keys_to_search = @sampler.env_keys.select { |ek| @opts[:include_optional] || ek['required'] }
 
-      keys_to_search.each { |ek| result[ek["key"]] = ENV.fetch(ek["key"], nil) }
+      keys_to_search.each { |ek| result[ek['key']] = ENV.fetch(ek['key'], nil) }
 
       result.reject { |k,v| !v.nil? }.keys
     end
@@ -46,7 +46,7 @@ module Envdocs
     private
 
     def retrieve_keys_template(filename)
-      YAML.load(File.read(Rails.root.join("config", filename)))
+      YAML.load(File.read(Rails.root.join('config', filename)))
     end
 
     def retrieve_keys_for_env_from_template(curr_env)
