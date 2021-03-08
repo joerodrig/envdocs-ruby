@@ -1,40 +1,56 @@
 require "envdocs/railtie"
 
 module Envdocs
-  # @param [String] filename
-  # @param [String] curr_env
-  # @param [Hash] opts
-  #   => [Booleam] include_optional
-  # @return [Array[String]]
-  def self.find_missing_keys(filename, curr_env, opts={})
-    expected_keys = retrieve_keys_template(filename)
-    expected_keys_for_env = retrieve_keys_for_env_from_template(expected_keys, curr_env)
-    missing_keys(expected_keys_for_env, opts)
-  end
+  class << self
+    attr_reader :environment, :filename, :opts
 
-  private 
-
-  def self.retrieve_keys_template(filename)
-    YAML.load(File.read(Rails.root.join("config", filename)))
-  end
-
-  def self.retrieve_keys_for_env_from_template(template, curr_env)
-    template.find { |k| k[curr_env].present? }[curr_env]
-  end
-
-  def self.missing_keys(expected_keys, opts)
-    result = {}
-
-    # If optionals included, return all. 
-    # Otherwise, return only keys that are marked as required.
-    keys_to_search = expected_keys.select do |ek|
-      opts[:include_optional] || ek["required"]
+    def configure(filename:, environment:, opts: {})
+      @configured = true
+      @environment = environment
+      @filename = filename
+      @opts = opts
+      @sampler = Sampler.new(filename, environment)
     end
 
-    keys_to_search.each do |ek| 
-      result[ek["key"]] = ENV.fetch(ek["key"], nil) 
+    # @param [String] filename
+    # @param [String] environment
+    # @param [Hash] opts
+    #   => [Booleam] include_optional
+    # @return [Array[String]]
+    def find_missing_keys
+      unless @configured
+        raise StandardError, 'Envdocs environment must be configured before running this command'
+      end
+      # If optionals included, return all. 
+      # Otherwise, return only keys that are marked as required.
+      result = {}
+      keys_to_search = @sampler.env_keys.select { |ek| @opts[:include_optional] || ek["required"] }
+
+      keys_to_search.each { |ek| result[ek["key"]] = ENV.fetch(ek["key"], nil) }
+
+      result.reject { |k,v| !v.nil? }.keys
+    end
+  end
+
+  # Retrieves keys for an environment from a sample template
+  class Sampler
+    attr_reader :filename, :template, :curr_env, :env_keys
+
+    def initialize(filename, curr_env)
+      @filename = filename
+      @curr_env = curr_env
+      @template = retrieve_keys_template(filename)
+      @env_keys = retrieve_keys_for_env_from_template(curr_env)
     end
 
-    result.reject { |k,v| !v.nil? }.keys
+    private
+
+    def retrieve_keys_template(filename)
+      YAML.load(File.read(Rails.root.join("config", filename)))
+    end
+
+    def retrieve_keys_for_env_from_template(curr_env)
+      @template.find { |k| k[curr_env].present? }[curr_env]
+    end
   end
 end

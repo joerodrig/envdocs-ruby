@@ -1,36 +1,68 @@
+require "minitest/spec"
 require 'test_helper'
 
 class Envdocs::Test < ActiveSupport::TestCase
   test "truth" do
     assert_kind_of Module, Envdocs
   end
-  
-  test "find_missing_keys, file not found" do
-    assert_raises Errno::ENOENT do 
-      Envdocs.find_missing_keys('invalid_file.yml', 'test', {include_optional: false})
+
+  describe '#configure' do
+    it 'Envdocs configure' do
+      Envdocs.configure(filename:'sample_keys.yml', environment:'test', opts:{include_optional: false})
+      assert_equal 'sample_keys.yml', Envdocs.filename
+      assert_equal 'test', Envdocs.environment
+      assert_equal Hash, Envdocs.opts.class
+    end
+
+    it 'Envdocs configure, default opts' do
+      Envdocs.configure(filename:'sample_keys.yml', environment:'test')
+      assert_equal 'sample_keys.yml', Envdocs.filename
+      assert_equal 'test', Envdocs.environment
+      assert_equal Hash, Envdocs.opts.class
     end
   end
 
-  test "find_missing_keys, required only" do
-    ENV.replace('RAILS_ENV' => 'test', 'foo' => '1')
-    assert_equal [], Envdocs.find_missing_keys('sample_keys.yml', 'test', {include_optional: false})
-
-    ENV.replace('foo' => '1')
-    assert_equal ["RAILS_ENV"], Envdocs.find_missing_keys('sample_keys.yml', 'test', {include_optional: false})
-  end
-
-  test "find_missing_keys, include optional" do
-    ENV.replace('RAILS_ENV' => 'test', 'foo' => '1')
-    assert_equal ["FOO"], Envdocs.find_missing_keys('sample_keys.yml', 'test', {include_optional: true})
-  end
-
-  test "retrieve_keys_template, file not found" do
-    assert_raises Errno::ENOENT do 
-      Envdocs.retrieve_keys_template('invalid_file.yml')
+  describe '#find_missing_keys' do
+    describe 'when an invalid template is provided' do
+      it 'raises' do
+        assert_raises Errno::ENOENT do 
+          Envdocs.configure(filename:'invalid_file.yml', environment:'test', opts:{include_optional: false})
+          Envdocs.find_missing_keys
+        end
+      end
     end
-  end
 
-  test "retrieve_keys_template, file found" do
-    assert_equal Array, Envdocs.retrieve_keys_template('sample_keys.yml').class
+    describe 'when getting only required keys' do
+      it 'returns any required keys missing' do
+        Envdocs.configure(filename:'sample_keys.yml', environment:'test', opts:{include_optional: false})
+
+        ENV.replace('RAILS_ENV' => 'test', 'foo' => '1')
+        assert_equal [], Envdocs.find_missing_keys
+
+        ENV.replace('foo' => '1')
+        assert_equal ['RAILS_ENV'], Envdocs.find_missing_keys
+      end
+    end
+
+    describe 'when getting required and optional keys' do
+      it 'returns any keys missing' do
+        Envdocs.configure(filename:'sample_keys.yml', environment:'test', opts:{include_optional: true})
+        
+        ENV.replace('RAILS_ENV' => 'test', 'foo' => '1')
+        assert_equal ["FOO"], Envdocs.find_missing_keys
+
+        ENV.replace('RAILS_ENV' => 'test', 'FOO' => '1')
+        assert_equal [], Envdocs.find_missing_keys
+      end
+    end
+
+    describe 'when getting keys with mismatched cases' do
+      it 'returns any mismatched keys as if they are missing' do
+        Envdocs.configure(filename:'sample_keys.yml', environment:'test', opts:{include_optional: true})
+        
+        ENV.replace('rails_env' => 'test', 'foo' => '1')
+        assert_equal ["RAILS_ENV", "FOO"], Envdocs.find_missing_keys
+      end
+    end
   end
 end
