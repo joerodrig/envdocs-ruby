@@ -9,19 +9,10 @@ Gem::Specification.new do |spec|
   spec.version     = Envdocs::VERSION
   spec.authors     = ["Joseph James Rodriguez"]
   spec.email       = ["joerodrig3@gmail.com"]
-  spec.homepage    = ""
-  spec.summary     = "Summary of Envdocs."
-  spec.description = "Description of Envdocs."
+  spec.homepage    = "https://github.com/joerodrig/envdocs-ruby/"
+  spec.summary     = "Find missing ENV keys"
+  spec.description = "Envdocs allows you to find missing env keys, as well as create living documentation of the keys themselves."
   spec.license     = "LGPLv3"
-
-  # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
-  # to allow pushing to a single host or delete this section to allow pushing to any host.
-  if spec.respond_to?(:metadata)
-    spec.metadata["allowed_push_host"] = "Set to 'http://mygemserver.com'"
-  else
-    raise "RubyGems 2.0 or newer is required to protect against " \
-      "public gem pushes."
-  end
 
   spec.files = Dir["{app,config,db,lib}/**/*", "LICENSE", "Rakefile", "README.md"]
 
