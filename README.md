@@ -44,7 +44,7 @@ The top-level key denotes the environment name we'd like to check against(ie. de
 # initializers/envdocs.rb
 Envdocs.configure(
   filename: 'sample_keys.yml',
-  environment: 'development',
+  environment: Rails.env,
   opts: { include_optional: false }
 )
 ```
@@ -57,7 +57,7 @@ Envdocs.find_missing_keys
 When called, an array of strings will be returned containing any missing keys. If no keys are missing, an empty array will be returned.
 
 ## Contributing
-Contribution directions go here.
+Features, bug fixes and other changes to envdocs-ruby are gladly accepted. Please open issues or a pull request with your change.
 
 ## License
 The gem is available as open source under the terms of the [LGPLv3 License](https://www.gnu.org/licenses/lgpl-3.0.html).
