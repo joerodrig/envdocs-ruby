@@ -4,6 +4,10 @@ module Envdocs
   class << self
     attr_reader :environment, :filename, :opts
 
+    # @param [String] filename
+    # @param [String] environment
+    # @param [Hash] opts
+    #   => [Booleam] include_optional
     def configure(filename:, environment:, opts: {})
       @configured = true
       @environment = environment
@@ -12,15 +16,13 @@ module Envdocs
       @sampler = Sampler.new(filename, environment)
     end
 
-    # @param [String] filename
-    # @param [String] environment
-    # @param [Hash] opts
-    #   => [Booleam] include_optional
+    # Returns an array of keys that were not found in the current ENV
     # @return [Array[String]]
     def find_missing_keys
       unless @configured
         raise StandardError, 'Envdocs environment must be configured before running this command'
       end
+
       # If optionals included, return all. 
       # Otherwise, return only keys that are marked as required.
       result = {}
@@ -36,6 +38,8 @@ module Envdocs
   class Sampler
     attr_reader :filename, :template, :curr_env, :env_keys
 
+    # @param [String] filename
+    # @param [String] curr_env
     def initialize(filename, curr_env)
       @filename = filename
       @curr_env = curr_env
@@ -45,10 +49,13 @@ module Envdocs
 
     private
 
+    # @param [String] filename
     def retrieve_keys_template(filename)
       YAML.load(File.read(Rails.root.join('config', filename)))
     end
 
+    # @param [String] curr_env
+    # @return [Array[Hash]]
     def retrieve_keys_for_env_from_template(curr_env)
       @template.find { |k| k[curr_env].present? }[curr_env]
     end
